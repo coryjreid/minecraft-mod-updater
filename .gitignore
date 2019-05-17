@@ -1,0 +1,8 @@
+CHANGELOG.txt
+mod_ids.txt
+*.sqlite
+*.p
+
+.idea/
+__pycache__/
+downloaded/
