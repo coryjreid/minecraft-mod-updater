@@ -16,19 +16,34 @@ if os.path.isfile(DATA_FILE):
     print("Done!")
 
     # some useful variables
+    updatesMade = False
     latestVersion = max(data.keys(), key=(lambda k: k))
     previousMods = data[latestVersion]['mods']
     nextVersion = latestVersion + 0.1
     modsPendingUpdate = {}
+    modsPendingRemoval = {}
+
+    # identify any mods which need to be removed
+    for modId, mod in previousMods.items():
+        if modId not in latestMods:
+            print(previousMods[modId]['modName'] + " has been removed.")
+            modsPendingRemoval[modId] = copy.deepcopy(mod)
 
     # identify any mods which have updates
-    for modId, mod in previousMods.items():
-        if latestMods[modId]['lastDownloadedFileId'] > previousMods[modId]['lastDownloadedFileId']:
-            print("Update necessary for " + previousMods[modId]['modName'])
+    for modId, mod in latestMods.items():
+        if (modId not in previousMods) or (latestMods[modId]['lastDownloadedFileId'] > previousMods[modId]['lastDownloadedFileId']):
+            print("Update necessary for " + latestMods[modId]['modName'])
             modsPendingUpdate[modId] = latestMods[modId]
 
-    # update mods with pending updates
+    # update mods pending removal
+    if len(modsPendingRemoval) > 0:
+        updatesMade = True
+        for modId, mod in modsPendingRemoval.items():
+            del previousMods[modId]
+
+    # update mods pending updates
     if len(modsPendingUpdate) > 0:
+        updatesMade = True
         data[nextVersion] = {
             'date': str(NOW),
             'mods': copy.deepcopy(data[latestVersion]['mods'])
@@ -36,6 +51,9 @@ if os.path.isfile(DATA_FILE):
 
         # download mods
         for modId, mod in modsPendingUpdate.items():
+            if modId not in previousMods:
+                data[nextVersion]['mods'][modId] = mod
+
             data[nextVersion]['mods'][modId]['lastDownloadedFileId'] = mod['lastDownloadedFileId']
 
             print("Getting download info for " + mod['modName'] + "...", end=" ")
@@ -44,22 +62,38 @@ if os.path.isfile(DATA_FILE):
 
             download_file(info['url'], DOWNLOAD_FOLDER + '\\'+str(nextVersion), info['nameOnDisk'])
 
+    # finish up
+    if updatesMade:
         # save data file
         save_data(data, DATA_FILE)
 
-        # update changelog
+        print("Writing CHANGELOG...", end=" ")
+
+        # write version header
         f = open(CHANGELOG_FILE, "a+")
         f.write(str(nextVersion) + ':\n')
 
-        for modId, mod in modsPendingUpdate.items():
-            f.write('    ' + mod['modName'] + ' updated\n')
+        # write entries for deleted mods
+        for modId, mod in modsPendingRemoval.items():
+            f.write('    REMOVED: ' + mod['modName'] + '\n')
 
+        # write separator
+        if len(modsPendingRemoval) > 0:
+            f.write('    ----\n')
+
+        # write entries for updated mods
+        for modId, mod in modsPendingUpdate.items():
+            f.write('    UPDATED: ' + mod['modName'] + '\n')
+
+        # write separator for next time and close
         f.write('\n\n')
         f.close()
 
-        print(str(len(modsPendingUpdate)) + " mods updated.")
+        print("Done!")
+
+        print(str(len(modsPendingUpdate)) + " mods updated and " + str(len(modsPendingRemoval)) + " mods removed.")
     else:
-        print("No mods need updating.")
+        print("No updates were necessary.")
 else:
     print("First run! Querying data from API...", end=" ")
     all_mods = get_all_latest()
