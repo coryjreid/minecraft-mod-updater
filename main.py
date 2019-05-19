@@ -19,7 +19,7 @@ if os.path.isfile(DATA_FILE):
     updatesMade = False
     latestVersion = max(data.keys(), key=(lambda k: k))
     previousMods = data[latestVersion]['mods']
-    nextVersion = latestVersion + 0.1
+    nextVersion = latestVersion + 1
     modsPendingUpdate = {}
     modsPendingRemoval = {}
 
@@ -98,7 +98,7 @@ else:
     print("First run! Querying data from API...", end=" ")
     all_mods = get_all_latest()
     data = {
-        1.0: {
+        1: {
             'date': str(NOW),
             'mods': all_mods
         }
@@ -109,7 +109,7 @@ else:
 
     # create changelog file
     f = open(CHANGELOG_FILE, "a+")
-    f.write('1.0:\n')
+    f.write('VERSION 1:\n')
 
     print("Downloading latest version of all mods...")
     for modId, mod in all_mods.items():
@@ -121,7 +121,7 @@ else:
         info = get_download_info(modId, mod['lastDownloadedFileId'])
         print("Done!")
 
-        download_file(info['url'], DOWNLOAD_FOLDER + '\\1.0', info['nameOnDisk'])
+        download_file(info['url'], DOWNLOAD_FOLDER + '\\v1', info['nameOnDisk'])
 
     # close the changelog
     f.write('\n\n')
