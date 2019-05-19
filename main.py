@@ -71,7 +71,7 @@ if os.path.isfile(DATA_FILE):
 
         # write version header
         f = open(CHANGELOG_FILE, "a+")
-        f.write(str(nextVersion) + ':\n')
+        f.write('VERSION ' + str(nextVersion) + ':\n')
 
         # write entries for deleted mods
         for modId, mod in modsPendingRemoval.items():
