@@ -1,0 +1,15 @@
+{
+  "mods": [
+    {
+      "name": "<Human-Readable Mod Name>",
+      "id": <CurseForge Project ID : Integer>,
+      "dependencies": [
+        <CurseForge Project ID : Integer>,
+        <CurseForge Project ID : Integer>
+      ],
+      "clientOnly": false,
+      "serverOnly": false,
+      "adminOnly": false
+    }
+  ]
+}
