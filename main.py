@@ -1,10 +1,17 @@
 import requests_cache
 import copy
-from constants import DATA_FILE, CHANGELOG_FILE, DOWNLOAD_FOLDER, NOW
+from constants import MODPACK_FILE, DATA_FILE, CHANGELOG_FILE, DOWNLOAD_FOLDER, NOW
 from method_defs import *
 
 # cache our request for 12 hours to keep from spamming the API
 requests_cache.install_cache('request-cache', backend='sqlite', expire_after=43200)
+
+if os.path.isfile(MODPACK_FILE):
+    with open(MODPACK_FILE, 'r') as f:
+        modpack = json.load(f)
+else:
+    print("ERROR: Cannot find " + MODPACK_FILE + ".")
+    exit(1)
 
 if os.path.isfile(DATA_FILE):
     print("Script previously run! Loading data from disk...", end=" ")
@@ -12,7 +19,8 @@ if os.path.isfile(DATA_FILE):
     print("Done!")
 
     print("Querying data from API...", end=" ")
-    latestMods = get_all_latest()
+    ids = get_modpack_mod_ids(modpack)
+    latestMods = get_all_latest(ids)
     print("Done!")
 
     # some useful variables
@@ -70,24 +78,23 @@ if os.path.isfile(DATA_FILE):
         print("Writing CHANGELOG...", end=" ")
 
         # write version header
-        f = open(CHANGELOG_FILE, "a+")
-        f.write('VERSION ' + str(nextVersion) + ':\n')
+        with open(CHANGELOG_FILE, "a+") as f:
+            f.write('VERSION ' + str(nextVersion) + ':\n')
 
-        # write entries for deleted mods
-        for modId, mod in modsPendingRemoval.items():
-            f.write('    REMOVED: ' + mod['modName'] + '\n')
+            # write entries for deleted mods
+            for modId, mod in modsPendingRemoval.items():
+                f.write('    REMOVED: ' + mod['modName'] + '\n')
 
-        # write separator
-        if len(modsPendingRemoval) > 0:
-            f.write('    ----\n')
+            # write separator
+            if len(modsPendingRemoval) > 0:
+                f.write('    ----\n')
 
-        # write entries for updated mods
-        for modId, mod in modsPendingUpdate.items():
-            f.write('    UPDATED: ' + mod['modName'] + '\n')
+            # write entries for updated mods
+            for modId, mod in modsPendingUpdate.items():
+                f.write('    UPDATED: ' + mod['modName'] + '\n')
 
-        # write separator for next time and close
-        f.write('\n\n')
-        f.close()
+            # write separator for next time and close
+            f.write('\n\n')
 
         print("Done!")
 
@@ -96,7 +103,8 @@ if os.path.isfile(DATA_FILE):
         print("No updates were necessary.")
 else:
     print("First run! Querying data from API...", end=" ")
-    all_mods = get_all_latest()
+    ids = get_modpack_mod_ids(modpack)
+    all_mods = get_all_latest(ids)
     data = {
         1: {
             'date': str(NOW),
@@ -108,23 +116,22 @@ else:
     save_data(data, DATA_FILE)
 
     # create changelog file
-    f = open(CHANGELOG_FILE, "a+")
-    f.write('VERSION 1:\n')
+    with open(CHANGELOG_FILE, "a+") as f:
+        f.write('VERSION 1:\n')
 
-    print("Downloading latest version of all mods...")
-    for modId, mod in all_mods.items():
-        # add changelog entries
-        f.write('    ' + mod['modName'] + ' updated\n')
+        print("Downloading latest version of all mods...")
+        for modId, mod in all_mods.items():
+            # add changelog entries
+            f.write('    ADDED: ' + mod['modName'] + '\n')
 
-        # download the file
-        print("Getting download info for " + all_mods[modId]['modName'] + "...", end=" ")
-        info = get_download_info(modId, mod['lastDownloadedFileId'])
-        print("Done!")
+            # download the file
+            print("Getting download info for " + all_mods[modId]['modName'] + "...", end=" ")
+            info = get_download_info(modId, mod['lastDownloadedFileId'])
+            print("Done!")
 
-        download_file(info['url'], DOWNLOAD_FOLDER + '\\v1', info['nameOnDisk'])
+            download_file(info['url'], DOWNLOAD_FOLDER + '\\v1', info['nameOnDisk'])
 
-    # close the changelog
-    f.write('\n\n')
-    f.close()
+        # close the changelog
+        f.write('\n\n')
 
 print("Success!")

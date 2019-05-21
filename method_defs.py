@@ -2,10 +2,18 @@ import requests
 import pickle
 import json
 import os
-from constants import MOD_IDS_FILE, HEADERS
+from constants import HEADERS
 
-with open(MOD_IDS_FILE, 'r') as f:
-    ids = [line.rstrip('\n') for line in f]
+
+def get_modpack_mod_ids(modpack):
+    mods = []
+    for mod in modpack['mods']:
+        if len(mod['dependencies']) > 0:
+            for d in mod['dependencies']:
+                mods.append(d)
+
+        mods.append(mod['id'])
+    return set(mods)
 
 
 def make_request(url, params):
@@ -14,7 +22,7 @@ def make_request(url, params):
     return json.loads(r.content)
 
 
-def get_all_latest():
+def get_all_latest(ids):
     results = make_request('https://staging_cursemeta.dries007.net/api/v3/direct/addon', {'id': ids})
 
     mods = {}

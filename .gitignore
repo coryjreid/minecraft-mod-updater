@@ -1,8 +1,10 @@
 CHANGELOG.txt
 mod_ids.txt
+modpack_config.json
 *.sqlite
 *.p
 
 .idea/
 __pycache__/
 downloaded/
+BAK*/
