@@ -68,7 +68,7 @@ if os.path.isfile(DATA_FILE):
             info = get_download_info(modId, mod['lastDownloadedFileId'])
             print("Done!")
 
-            download_file(info['url'], DOWNLOAD_FOLDER + '\\'+str(nextVersion), info['nameOnDisk'])
+            download_file(info['url'], DOWNLOAD_FOLDER + '\\v' + str(nextVersion), info['nameOnDisk'])
 
     # finish up
     if updatesMade:
